@@ -281,7 +281,7 @@
     <script type="module">
         // Impor fungsi yang Anda perlukan
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, setLogLevel, collection, addDoc, query, onSnapshot, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Konfigurasi Firebase Anda (DIISI OLEH ENVIRONMENT)
@@ -306,7 +306,7 @@
         } catch (e) {
             console.error("Error initializing Firebase:", e);
             alert("Gagal terhubung ke layanan undangan. Silakan refresh halaman.");
-            return;
+            // Menghapus 'return' ilegal dari sini
         }
 
         // Fungsi untuk Autentikasi
@@ -317,12 +317,14 @@
                     // Pengguna sudah login, muat ucapan
                     loadGreetings();
                 } else {
-                    console.log("No user signed in, signing in anonymously...");
+                    console.log("No user signed in, signing in...");
                     try {
                         // Gunakan token jika ada, jika tidak, login anonim
                         if (initialAuthToken) {
+                            console.log("Signing in with custom token...");
                             await signInWithCustomToken(auth, initialAuthToken);
                         } else {
+                            console.log("Signing in anonymously...");
                             await signInAnonymously(auth);
                         }
                         // Setelah login, loadGreetings() akan dipicu oleh onAuthStateChanged lagi
@@ -397,8 +399,10 @@
                 ucapanList.innerHTML = ''; 
                 
                 if (querySnapshot.empty) {
-                    loadingMsg.innerText = "Jadilah yang pertama mengirim ucapan!";
-                    ucapanList.appendChild(loadingMsg);
+                    const noUcapanMsg = document.createElement('div');
+                    noUcapanMsg.className = "text-center text-gray-500";
+                    noUcapanMsg.innerText = "Jadilah yang pertama mengirim ucapan!";
+                    ucapanList.appendChild(noUcapanMsg);
                 }
 
                 querySnapshot.forEach((doc) => {
@@ -417,8 +421,11 @@
                 });
             }, (error) => {
                 console.error("Error listening to greetings: ", error);
-                loadingMsg.innerText = "Gagal memuat ucapan.";
-                ucapanList.appendChild(loadingMsg);
+                ucapanList.innerHTML = ''; // Kosongkan daftar
+                const errorMsg = document.createElement('div');
+                errorMsg.className = "text-center text-red-500";
+                errorMsg.innerText = "Gagal memuat ucapan.";
+                ucapanList.appendChild(errorMsg);
             });
         }
 
